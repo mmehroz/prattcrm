@@ -7,6 +7,8 @@ use App\Http\Controllers\loginController;
 use App\Http\Controllers\vendorController;
 use App\Http\Controllers\categoryController;
 use App\Http\Controllers\subcategoryController;
+use App\Http\Controllers\productController;
+use App\Http\Controllers\subscriberController;
 /*
 |---------------------------------------------------------------------	-----
 | API Routes
@@ -45,5 +47,17 @@ Route::any('/updatesubcategory', [subcategoryController::class, 'updatesubcatego
 Route::any('/subcategorylist', [subcategoryController::class, 'subcategorylist']);
 Route::any('/subcategorydetails', [subcategoryController::class, 'subcategorydetails']);
 Route::any('/deletesubcategory', [subcategoryController::class, 'deletesubcategory']);
+
+Route::any('/createproduct', [productController::class, 'createproduct']);
+Route::any('/updateproduct', [productController::class, 'updateproduct']);
+Route::any('/productlist', [productController::class, 'productlist']);
+Route::any('/productdetails',[productController::class, 'productdetails']);
+Route::any('/deleteproduct',[productController::class, 'deleteproduct']);
+
+Route::any('/createsubscriber', [subscriberController::class, 'createsubscriber']);
+Route::any('/updatesubscriber', [subscriberController::class, 'updatesubscriber']);
+Route::any('/subscriberlist', [subscriberController::class, 'subscriberlist']);
+Route::any('/subscriberdetails', [subscriberController::class, 'subscriberdetails']);
+Route::any('/deletesubscriber', [subscriberController::class, 'deletesubscriber']);
 });
 });
