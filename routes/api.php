@@ -9,6 +9,8 @@ use App\Http\Controllers\categoryController;
 use App\Http\Controllers\subcategoryController;
 use App\Http\Controllers\productController;
 use App\Http\Controllers\subscriberController;
+use App\Http\Controller\operationController;
+use App\Http\Controller\subscriptionController;
 /*
 |---------------------------------------------------------------------	-----
 | API Routes
@@ -59,5 +61,20 @@ Route::any('/updatesubscriber', [subscriberController::class, 'updatesubscriber'
 Route::any('/subscriberlist', [subscriberController::class, 'subscriberlist']);
 Route::any('/subscriberdetails', [subscriberController::class, 'subscriberdetails']);
 Route::any('/deletesubscriber', [subscriberController::class, 'deletesubscriber']);
+Route::any('/savesubscriber', [subscriberController::class, 'savesubscriber']);
+
+Route::any('/createoperation', [operationController::class, 'createoperation']);
+Route::any('/updateoperation', [operationController::class, 'updateoperation']);
+Route::any('/operationlist', [operationController::class, 'operationlist']);
+Route::any('/operationdetail', [operationController::class, 'operationdetail']);
+Route::any('/deleteoperation', [operationController::class, 'deleteoperation']);
+
+Route::any('/createsubscription', [subscriptionController::class, 'createsubscription']);
+Route::any('/updatesubscription', [subscriptionController::class, 'updatesubscription']);
+Route::any('/subscriptionlist', [subscriptionController::class, 'subscriptionlist']);
+Route::any('/subscriptiondetail', [subscriptionController::class, 'subscriptiondetail']);
+Route::any('/deletesubscription', [subscriptionController::class, 'deletesubscription']);
+Route::any('/savesubscription', [subscriptionController::class, 'savesubscription']);
+
 });
 });

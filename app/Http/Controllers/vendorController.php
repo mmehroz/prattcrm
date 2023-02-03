@@ -115,7 +115,7 @@ class vendorController extends Controller
 	}
 	public function vendorlist(Request $request){
 		$getvendorlist = DB::table('vendor')
-		->select('*')
+		->select('*','vendor_id as id')
 		->where('status_id','=',1)
 		->orderBy('vendor_id','DESC')
 		->get();
