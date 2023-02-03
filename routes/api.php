@@ -63,18 +63,19 @@ Route::any('/subscriberdetails', [subscriberController::class, 'subscriberdetail
 Route::any('/deletesubscriber', [subscriberController::class, 'deletesubscriber']);
 Route::any('/savesubscriber', [subscriberController::class, 'savesubscriber']);
 
-Route::any('/createoperation', [operationController::class, 'createoperation']);
-Route::any('/updateoperation', [operationController::class, 'updateoperation']);
-Route::any('/operationlist', [operationController::class, 'operationlist']);
-Route::any('/operationdetail', [operationController::class, 'operationdetail']);
-Route::any('/deleteoperation', [operationController::class, 'deleteoperation']);
+Route::any('/createoperation', [subscriberController::class, 'createoperation']);
+Route::any('/updateoperation', [subscriberController::class, 'updateoperation']);
+Route::any('/operationlist', [subscriberController::class, 'operationlist']);
+Route::any('/operationdetail', [subscriberController::class, 'operationdetail']);
+Route::any('/deleteoperation', [subscriberController::class, 'deleteoperation']);
+Route::any('/saveoperation', [operationController::class, 'saveoperation']);
 
-Route::any('/createsubscription', [subscriptionController::class, 'createsubscription']);
-Route::any('/updatesubscription', [subscriptionController::class, 'updatesubscription']);
-Route::any('/subscriptionlist', [subscriptionController::class, 'subscriptionlist']);
-Route::any('/subscriptiondetail', [subscriptionController::class, 'subscriptiondetail']);
-Route::any('/deletesubscription', [subscriptionController::class, 'deletesubscription']);
-Route::any('/savesubscription', [subscriptionController::class, 'savesubscription']);
+Route::any('/createsubscription', [subscriberController::class, 'createsubscription']);
+Route::any('/updatesubscription', [subscriberController::class, 'updatesubscription']);
+Route::any('/subscriptionlist', [subscriberController::class, 'subscriptionlist']);
+Route::any('/subscriptiondetail', [subscriberController::class, 'subscriptiondetail']);
+Route::any('/deletesubscription', [subscriberController::class, 'deletesubscription']);
+Route::any('/savesubscription', [subscriberController::class, 'savesubscription']);
 
 });
 });

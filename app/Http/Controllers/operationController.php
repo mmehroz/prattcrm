@@ -178,4 +178,71 @@ class operationController extends Controller
 			return response()->json("Oops! Something Went Wrong", 400);
 		}
 	}
+	public function saveoperation(Request $request){
+		$curl = curl_init();
+		curl_setopt_array($curl, array(
+		CURLOPT_URL => 'https://prod.mobility-api.pareteum.cloud/v3/mobility/operations/list?MVNO=500087&offset=0&limit=20',
+		CURLOPT_RETURNTRANSFER => true,
+		CURLOPT_ENCODING => '',
+		CURLOPT_MAXREDIRS => 10,
+		CURLOPT_TIMEOUT => 0,
+		CURLOPT_FOLLOWLOCATION => true,
+		CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+		CURLOPT_CUSTOMREQUEST => 'GET',
+		CURLOPT_HTTPHEADER => array(
+			'Authorization: Basic cHJhdHRfbW9iaWxlOlByQDFrJUIj'
+		),
+		));
+		$response = curl_exec($curl);
+		curl_close($curl);
+		$response = json_decode($response);
+		foreach($response->results as $results){
+			$personal = DB::table('operation')
+			->select('*')
+			->where('operation_id','=',$results->operation_id)
+			->where('status_id','=',1)
+			->count();
+			if($personal == 0){
+				if(isset($results->activationStatusId)){
+					$activationstatusid = $results->activationStatusId;
+				}else{
+					$activationstatusid = "";
+				}
+				if(isset($results->size)){
+					$size = $results->size;
+				}else{
+					$size = "";
+				}
+				$adds = array(
+					'operation_id' 						=> $results->operation_id,
+					'operation_phonenumber' 			=> $results->phoneNumber,
+					'operation_portinstatus' 			=> $results->portinStatus,
+					'operation_billingaccountnumber' 	=> $results->billingAccountNumber,
+					'operation_updated_at' 				=> $results->updated_at,
+					'operation_activation_updated_at' 	=> $results->activation_updated_at,
+					'operation_sellerid' 				=> $results->sellerId,
+					'operation_subscriberid' 			=> $results->subscriberId,
+					'operation_status' 					=> $results->status,
+					'operation_activationid' 			=> $results->activationId,
+					'operation_activationstatusid' 		=> $activationstatusid,
+					'operation_activationdate' 			=> $results->activationDate,
+					'operation_imei' 					=> $results->imei,
+					'operation_iccid' 					=> $results->iccid,
+					'operation_subscribername' 			=> $results->subscriberName,
+					'operation_size' 					=> $size,
+					'operation_mvno' 					=> $results->mvno,
+					'operation_activationtype' 			=> $results->activation_type,
+					'status_id'							=> 1,
+					'created_by'						=> $request->user_id,
+					'created_at'						=> date('Y-m-d h:i:s')
+				);
+				$save = DB::table('operation')->insert($adds);
+			}
+		}
+		if(isset($save)){
+			return response()->json(['message' => 'Saved Successfully'],200);
+		}else{
+			return response()->json(['message' => 'Already Saved'],200);
+		}
+	}
 }
