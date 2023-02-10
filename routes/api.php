@@ -11,6 +11,8 @@ use App\Http\Controllers\productController;
 use App\Http\Controllers\subscriberController;
 use App\Http\Controller\operationController;
 use App\Http\Controller\subscriptionController;
+use App\Http\Controller\mvnoplanController;
+use App\Http\Controller\deviceController;
 /*
 |---------------------------------------------------------------------	-----
 | API Routes
@@ -68,14 +70,23 @@ Route::any('/updateoperation', [subscriberController::class, 'updateoperation'])
 Route::any('/operationlist', [subscriberController::class, 'operationlist']);
 Route::any('/operationdetail', [subscriberController::class, 'operationdetail']);
 Route::any('/deleteoperation', [subscriberController::class, 'deleteoperation']);
-Route::any('/saveoperation', [operationController::class, 'saveoperation']);
+Route::any('/saveoperation', [subscriberController::class, 'saveoperation']);
 
 Route::any('/createsubscription', [subscriberController::class, 'createsubscription']);
 Route::any('/updatesubscription', [subscriberController::class, 'updatesubscription']);
 Route::any('/subscriptionlist', [subscriberController::class, 'subscriptionlist']);
-Route::any('/subscriptiondetail', [subscriberController::class, 'subscriptiondetail']);
+Route::any('/subscriptiondetails', [subscriberController::class, 'subscriptiondetails']);
 Route::any('/deletesubscription', [subscriberController::class, 'deletesubscription']);
 Route::any('/savesubscription', [subscriberController::class, 'savesubscription']);
 
+Route::any('/createmvnoplan', [subscriberController::class, 'createmvnoplan']);
+Route::any('/updatesubscription', [subscriberController::class, 'updatesubscription']);
+Route::any('/mvnoplanlist', [subscriberController::class, 'mvnoplanlist']);
+Route::any('/mvnoplandetails', [subscriberController::class, 'mvnoplandetails']);
+Route::any('/deletemvnoplan', [subscriberController::class, 'deletemvnoplan']);
+Route::any('/savemvnoplan', [subscriberController::class, 'savemvnoplan']);
+
+Route::any('/changeimei', [deviceController::class, 'changeimei']);
+Route::any('/changesim', [deviceController::class, 'changesim']);
 });
 });
