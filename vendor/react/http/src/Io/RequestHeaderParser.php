@@ -4,6 +4,7 @@ namespace React\Http\Io;
 
 use Evenement\EventEmitter;
 use Psr\Http\Message\ServerRequestInterface;
+use React\Http\Message\Response;
 use React\Http\Message\ServerRequest;
 use React\Socket\ConnectionInterface;
 use Exception;
@@ -23,6 +24,17 @@ class RequestHeaderParser extends EventEmitter
 {
     private $maxSize = 8192;
 
+    /** @var Clock */
+    private $clock;
+
+    /** @var array<string|int,array<string,string>> */
+    private $connectionParams = array();
+
+    public function __construct(Clock $clock)
+    {
+        $this->clock = $clock;
+    }
+
     public function handle(ConnectionInterface $conn)
     {
         $buffer = '';
@@ -39,7 +51,7 @@ class RequestHeaderParser extends EventEmitter
                 $fn = null;
 
                 $that->emit('error', array(
-                    new \OverflowException("Maximum header size of {$maxSize} exceeded.", 431),
+                    new \OverflowException("Maximum header size of {$maxSize} exceeded.", Response::STATUS_REQUEST_HEADER_FIELDS_TOO_LARGE),
                     $conn
                 ));
                 return;
@@ -57,8 +69,7 @@ class RequestHeaderParser extends EventEmitter
             try {
                 $request = $that->parseRequest(
                     (string)\substr($buffer, 0, $endOfHeader + 2),
-                    $conn->getRemoteAddress(),
-                    $conn->getLocalAddress()
+                    $conn
                 );
             } catch (Exception $exception) {
                 $buffer = '';
@@ -106,21 +117,16 @@ class RequestHeaderParser extends EventEmitter
                 $stream->close();
             }
         });
-
-        $conn->on('close', function () use (&$buffer, &$fn) {
-            $fn = $buffer = null;
-        });
     }
 
     /**
      * @param string $headers buffer string containing request headers only
-     * @param ?string $remoteSocketUri
-     * @param ?string $localSocketUri
+     * @param ConnectionInterface $connection
      * @return ServerRequestInterface
      * @throws \InvalidArgumentException
      * @internal
      */
-    public function parseRequest($headers, $remoteSocketUri, $localSocketUri)
+    public function parseRequest($headers, ConnectionInterface $connection)
     {
         // additional, stricter safe-guard for request line
         // because request parser doesn't properly cope with invalid ones
@@ -131,7 +137,7 @@ class RequestHeaderParser extends EventEmitter
 
         // only support HTTP/1.1 and HTTP/1.0 requests
         if ($start['version'] !== '1.1' && $start['version'] !== '1.0') {
-            throw new \InvalidArgumentException('Received request with invalid protocol version', 505);
+            throw new \InvalidArgumentException('Received request with invalid protocol version', Response::STATUS_VERSION_NOT_SUPPORTED);
         }
 
         // match all request header fields into array, thanks to @kelunik for checking the HTTP specs and coming up with this regex
@@ -155,25 +161,59 @@ class RequestHeaderParser extends EventEmitter
             }
         }
 
-        // create new obj implementing ServerRequestInterface by preserving all
-        // previous properties and restoring original request-target
-        $serverParams = array(
-            'REQUEST_TIME' => \time(),
-            'REQUEST_TIME_FLOAT' => \microtime(true)
-        );
-
-        // scheme is `http` unless TLS is used
-        $localParts = \parse_url($localSocketUri);
-        if (isset($localParts['scheme']) && $localParts['scheme'] === 'tls') {
-            $scheme = 'https://';
-            $serverParams['HTTPS'] = 'on';
+        // reuse same connection params for all server params for this connection
+        $cid = \PHP_VERSION_ID < 70200 ? \spl_object_hash($connection) : \spl_object_id($connection);
+        if (isset($this->connectionParams[$cid])) {
+            $serverParams = $this->connectionParams[$cid];
         } else {
-            $scheme = 'http://';
+            // assign new server params for new connection
+            $serverParams = array();
+
+            // scheme is `http` unless TLS is used
+            $localSocketUri = $connection->getLocalAddress();
+            $localParts = $localSocketUri === null ? array() : \parse_url($localSocketUri);
+            if (isset($localParts['scheme']) && $localParts['scheme'] === 'tls') {
+                $serverParams['HTTPS'] = 'on';
+            }
+
+            // apply SERVER_ADDR and SERVER_PORT if server address is known
+            // address should always be known, even for Unix domain sockets (UDS)
+            // but skip UDS as it doesn't have a concept of host/port.
+            if ($localSocketUri !== null && isset($localParts['host'], $localParts['port'])) {
+                $serverParams['SERVER_ADDR'] = $localParts['host'];
+                $serverParams['SERVER_PORT'] = $localParts['port'];
+            }
+
+            // apply REMOTE_ADDR and REMOTE_PORT if source address is known
+            // address should always be known, unless this is over Unix domain sockets (UDS)
+            $remoteSocketUri = $connection->getRemoteAddress();
+            if ($remoteSocketUri !== null) {
+                $remoteAddress = \parse_url($remoteSocketUri);
+                $serverParams['REMOTE_ADDR'] = $remoteAddress['host'];
+                $serverParams['REMOTE_PORT'] = $remoteAddress['port'];
+            }
+
+            // remember server params for all requests from this connection, reset on connection close
+            $this->connectionParams[$cid] = $serverParams;
+            $params =& $this->connectionParams;
+            $connection->on('close', function () use (&$params, $cid) {
+                assert(\is_array($params));
+                unset($params[$cid]);
+            });
         }
 
+        // create new obj implementing ServerRequestInterface by preserving all
+        // previous properties and restoring original request-target
+        $serverParams['REQUEST_TIME'] = (int) ($now = $this->clock->now());
+        $serverParams['REQUEST_TIME_FLOAT'] = $now;
+
+        // scheme is `http` unless TLS is used
+        $scheme = isset($serverParams['HTTPS']) ? 'https://' : 'http://';
+
         // default host if unset comes from local socket address or defaults to localhost
+        $hasHost = $host !== null;
         if ($host === null) {
-            $host = isset($localParts['host'], $localParts['port']) ? $localParts['host'] . ':' . $localParts['port'] : '127.0.0.1';
+            $host = isset($serverParams['SERVER_ADDR'], $serverParams['SERVER_PORT']) ? $serverParams['SERVER_ADDR'] . ':' . $serverParams['SERVER_PORT'] : '127.0.0.1';
         }
 
         if ($start['method'] === 'OPTIONS' && $start['target'] === '*') {
@@ -204,22 +244,6 @@ class RequestHeaderParser extends EventEmitter
             }
         }
 
-        // apply REMOTE_ADDR and REMOTE_PORT if source address is known
-        // address should always be known, unless this is over Unix domain sockets (UDS)
-        if ($remoteSocketUri !== null) {
-            $remoteAddress = \parse_url($remoteSocketUri);
-            $serverParams['REMOTE_ADDR'] = $remoteAddress['host'];
-            $serverParams['REMOTE_PORT'] = $remoteAddress['port'];
-        }
-
-        // apply SERVER_ADDR and SERVER_PORT if server address is known
-        // address should always be known, even for Unix domain sockets (UDS)
-        // but skip UDS as it doesn't have a concept of host/port.
-        if ($localSocketUri !== null && isset($localParts['host'], $localParts['port'])) {
-            $serverParams['SERVER_ADDR'] = $localParts['host'];
-            $serverParams['SERVER_PORT'] = $localParts['port'];
-        }
-
         $request = new ServerRequest(
             $start['method'],
             $uri,
@@ -234,8 +258,8 @@ class RequestHeaderParser extends EventEmitter
             $request = $request->withRequestTarget($start['target']);
         }
 
-        // Optional Host header value MUST be valid (host and optional port)
-        if ($request->hasHeader('Host')) {
+        if ($hasHost) {
+            // Optional Host request header value MUST be valid (host and optional port)
             $parts = \parse_url('http://' . $request->getHeaderLine('Host'));
 
             // make sure value contains valid host component (IP or hostname)
@@ -244,34 +268,39 @@ class RequestHeaderParser extends EventEmitter
             }
 
             // make sure value does not contain any other URI component
-            unset($parts['scheme'], $parts['host'], $parts['port']);
+            if (\is_array($parts)) {
+                unset($parts['scheme'], $parts['host'], $parts['port']);
+            }
             if ($parts === false || $parts) {
                 throw new \InvalidArgumentException('Invalid Host header value');
             }
+        } elseif (!$hasHost && $start['version'] === '1.1' && $start['method'] !== 'CONNECT') {
+            // require Host request header for HTTP/1.1 (except for CONNECT method)
+            throw new \InvalidArgumentException('Missing required Host request header');
+        } elseif (!$hasHost) {
+            // remove default Host request header for HTTP/1.0 when not explicitly given
+            $request = $request->withoutHeader('Host');
         }
 
         // ensure message boundaries are valid according to Content-Length and Transfer-Encoding request headers
         if ($request->hasHeader('Transfer-Encoding')) {
             if (\strtolower($request->getHeaderLine('Transfer-Encoding')) !== 'chunked') {
-                throw new \InvalidArgumentException('Only chunked-encoding is allowed for Transfer-Encoding', 501);
+                throw new \InvalidArgumentException('Only chunked-encoding is allowed for Transfer-Encoding', Response::STATUS_NOT_IMPLEMENTED);
             }
 
             // Transfer-Encoding: chunked and Content-Length header MUST NOT be used at the same time
             // as per https://tools.ietf.org/html/rfc7230#section-3.3.3
             if ($request->hasHeader('Content-Length')) {
-                throw new \InvalidArgumentException('Using both `Transfer-Encoding: chunked` and `Content-Length` is not allowed', 400);
+                throw new \InvalidArgumentException('Using both `Transfer-Encoding: chunked` and `Content-Length` is not allowed', Response::STATUS_BAD_REQUEST);
             }
         } elseif ($request->hasHeader('Content-Length')) {
             $string = $request->getHeaderLine('Content-Length');
 
             if ((string)(int)$string !== $string) {
                 // Content-Length value is not an integer or not a single integer
-                throw new \InvalidArgumentException('The value of `Content-Length` is not valid', 400);
+                throw new \InvalidArgumentException('The value of `Content-Length` is not valid', Response::STATUS_BAD_REQUEST);
             }
         }
-
-        // always sanitize Host header because it contains critical routing information
-        $request = $request->withUri($request->getUri()->withUserInfo('u')->withUserInfo(''));
 
         return $request;
     }

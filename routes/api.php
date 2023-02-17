@@ -9,11 +9,11 @@ use App\Http\Controllers\categoryController;
 use App\Http\Controllers\subcategoryController;
 use App\Http\Controllers\productController;
 use App\Http\Controllers\subscriberController;
-use App\Http\Controller\operationController;
-use App\Http\Controller\subscriptionController;
-use App\Http\Controller\mvnoplanController;
-use App\Http\Controller\deviceController;
-use App\Http\Controller\imeiplanController;
+use App\Http\Controllers\operationController;
+use App\Http\Controllers\subscriptionController;
+use App\Http\Controllers\mvnoplanController;
+use App\Http\Controllers\deviceController;
+use App\Http\Controllers\imeiplanController;
 /*
 |---------------------------------------------------------------------	-----
 | API Routes
@@ -66,12 +66,12 @@ Route::any('/subscriberdetails', [subscriberController::class, 'subscriberdetail
 Route::any('/deletesubscriber', [subscriberController::class, 'deletesubscriber']);
 Route::any('/savesubscriber', [subscriberController::class, 'savesubscriber']);
 
-Route::any('/createoperation', [subscriberController::class, 'createoperation']);
-Route::any('/updateoperation', [subscriberController::class, 'updateoperation']);
-Route::any('/operationlist', [subscriberController::class, 'operationlist']);
-Route::any('/operationdetail', [subscriberController::class, 'operationdetail']);
-Route::any('/deleteoperation', [subscriberController::class, 'deleteoperation']);
-Route::any('/saveoperation', [subscriberController::class, 'saveoperation']);
+Route::any('/createoperation', [operationController::class, 'createoperation']);
+Route::any('/updateoperation', [operationController::class, 'updateoperation']);
+Route::any('/operationlist', [operationController::class, 'operationlist']);
+Route::any('/operationdetail', [operationController::class, 'operationdetail']);
+Route::any('/deleteoperation', [operationController::class, 'deleteoperation']);
+Route::any('/saveoperation', [operationController::class, 'saveoperation']);
 
 Route::any('/createsubscription', [subscriberController::class, 'createsubscription']);
 Route::any('/updatesubscription', [subscriberController::class, 'updatesubscription']);

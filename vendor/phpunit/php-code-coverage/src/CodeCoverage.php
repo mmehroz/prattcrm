@@ -20,7 +20,6 @@ use function count;
 use function explode;
 use function get_class;
 use function is_array;
-use function is_file;
 use function sort;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Runner\PhptTestCase;
@@ -29,12 +28,9 @@ use ReflectionClass;
 use SebastianBergmann\CodeCoverage\Driver\Driver;
 use SebastianBergmann\CodeCoverage\Node\Builder;
 use SebastianBergmann\CodeCoverage\Node\Directory;
-use SebastianBergmann\CodeCoverage\StaticAnalysis\CachingCoveredFileAnalyser;
-use SebastianBergmann\CodeCoverage\StaticAnalysis\CachingUncoveredFileAnalyser;
-use SebastianBergmann\CodeCoverage\StaticAnalysis\CoveredFileAnalyser;
-use SebastianBergmann\CodeCoverage\StaticAnalysis\ParsingCoveredFileAnalyser;
-use SebastianBergmann\CodeCoverage\StaticAnalysis\ParsingUncoveredFileAnalyser;
-use SebastianBergmann\CodeCoverage\StaticAnalysis\UncoveredFileAnalyser;
+use SebastianBergmann\CodeCoverage\StaticAnalysis\CachingFileAnalyser;
+use SebastianBergmann\CodeCoverage\StaticAnalysis\FileAnalyser;
+use SebastianBergmann\CodeCoverage\StaticAnalysis\ParsingFileAnalyser;
 use SebastianBergmann\CodeUnitReverseLookup\Wizard;
 
 /**
@@ -80,7 +76,7 @@ final class CodeCoverage
     private $ignoreDeprecatedCode = false;
 
     /**
-     * @var PhptTestCase|string|TestCase
+     * @var null|PhptTestCase|string|TestCase
      */
     private $currentId;
 
@@ -109,14 +105,9 @@ final class CodeCoverage
     private $parentClassesExcludedFromUnintentionallyCoveredCodeCheck = [];
 
     /**
-     * @var ?CoveredFileAnalyser
+     * @var ?FileAnalyser
      */
-    private $coveredFileAnalyser;
-
-    /**
-     * @var ?UncoveredFileAnalyser
-     */
-    private $uncoveredFileAnalyser;
+    private $analyser;
 
     /**
      * @var ?string
@@ -136,7 +127,7 @@ final class CodeCoverage
      */
     public function getReport(): Directory
     {
-        return (new Builder($this->coveredFileAnalyser()))->build($this);
+        return (new Builder($this->analyser()))->build($this);
     }
 
     /**
@@ -240,9 +231,9 @@ final class CodeCoverage
      * @param PhptTestCase|string|TestCase $id
      * @param array|false                  $linesToBeCovered
      *
-     * @throws UnintentionallyCoveredCodeException
-     * @throws TestIdMissingException
      * @throws ReflectionException
+     * @throws TestIdMissingException
+     * @throws UnintentionallyCoveredCodeException
      */
     public function append(RawCodeCoverageData $rawData, $id = null, bool $append = true, $linesToBeCovered = [], array $linesToBeUsed = []): void
     {
@@ -255,6 +246,8 @@ final class CodeCoverage
         }
 
         $this->applyFilter($rawData);
+
+        $this->applyExecutableLinesFilter($rawData);
 
         if ($this->useAnnotationsForIgnoringCode) {
             $this->applyIgnoredLinesFilter($rawData);
@@ -277,11 +270,13 @@ final class CodeCoverage
                 return;
             }
 
-            $size   = 'unknown';
-            $status = -1;
+            $size         = 'unknown';
+            $status       = -1;
+            $fromTestcase = false;
 
             if ($id instanceof TestCase) {
-                $_size = $id->getSize();
+                $fromTestcase = true;
+                $_size        = $id->getSize();
 
                 if ($_size === Test::SMALL) {
                     $size = 'small';
@@ -294,11 +289,12 @@ final class CodeCoverage
                 $status = $id->getStatus();
                 $id     = get_class($id) . '::' . $id->getName();
             } elseif ($id instanceof PhptTestCase) {
-                $size = 'large';
-                $id   = $id->getName();
+                $fromTestcase = true;
+                $size         = 'large';
+                $id           = $id->getName();
             }
 
-            $this->tests[$id] = ['size' => $size, 'status' => $status];
+            $this->tests[$id] = ['size' => $size, 'status' => $status, 'fromTestcase' => $fromTestcase];
 
             $this->data->markCodeAsExecutedByTestCase($id, $rawData);
         }
@@ -433,8 +429,8 @@ final class CodeCoverage
      *
      * @param array|false $linesToBeCovered
      *
-     * @throws UnintentionallyCoveredCodeException
      * @throws ReflectionException
+     * @throws UnintentionallyCoveredCodeException
      */
     private function applyCoversAnnotationFilter(RawCodeCoverageData $rawData, $linesToBeCovered, array $linesToBeUsed): void
     {
@@ -463,7 +459,8 @@ final class CodeCoverage
 
         if (is_array($linesToBeCovered)) {
             foreach ($linesToBeCovered as $fileToBeCovered => $includedLines) {
-                $rawData->keepCoverageDataOnlyForLines($fileToBeCovered, $includedLines);
+                $rawData->keepLineCoverageDataOnlyForLines($fileToBeCovered, $includedLines);
+                $rawData->keepFunctionCoverageDataOnlyForLines($fileToBeCovered, $includedLines);
             }
         }
     }
@@ -481,6 +478,27 @@ final class CodeCoverage
         }
     }
 
+    private function applyExecutableLinesFilter(RawCodeCoverageData $data): void
+    {
+        foreach (array_keys($data->lineCoverage()) as $filename) {
+            if (!$this->filter->isFile($filename)) {
+                continue;
+            }
+
+            $linesToBranchMap = $this->analyser()->executableLinesIn($filename);
+
+            $data->keepLineCoverageDataOnlyForLines(
+                $filename,
+                array_keys($linesToBranchMap)
+            );
+
+            $data->markExecutableLineByBranch(
+                $filename,
+                $linesToBranchMap
+            );
+        }
+    }
+
     private function applyIgnoredLinesFilter(RawCodeCoverageData $data): void
     {
         foreach (array_keys($data->lineCoverage()) as $filename) {
@@ -490,7 +508,7 @@ final class CodeCoverage
 
             $data->removeCoverageDataForLines(
                 $filename,
-                $this->coveredFileAnalyser()->ignoredLinesFor($filename)
+                $this->analyser()->ignoredLinesFor($filename)
             );
         }
     }
@@ -506,11 +524,11 @@ final class CodeCoverage
         );
 
         foreach ($uncoveredFiles as $uncoveredFile) {
-            if (is_file($uncoveredFile)) {
+            if ($this->filter->isFile($uncoveredFile)) {
                 $this->append(
                     RawCodeCoverageData::fromUncoveredFile(
                         $uncoveredFile,
-                        $this->uncoveredFileAnalyser()
+                        $this->analyser()
                     ),
                     self::UNCOVERED_FILES
                 );
@@ -531,7 +549,7 @@ final class CodeCoverage
         $this->driver->start();
 
         foreach ($uncoveredFiles as $uncoveredFile) {
-            if (is_file($uncoveredFile)) {
+            if ($this->filter->isFile($uncoveredFile)) {
                 include_once $uncoveredFile;
             }
         }
@@ -540,8 +558,8 @@ final class CodeCoverage
     }
 
     /**
-     * @throws UnintentionallyCoveredCodeException
      * @throws ReflectionException
+     * @throws UnintentionallyCoveredCodeException
      */
     private function performUnintentionallyCoveredCodeCheck(RawCodeCoverageData $data, array $linesToBeCovered, array $linesToBeUsed): void
     {
@@ -632,7 +650,7 @@ final class CodeCoverage
             } catch (\ReflectionException $e) {
                 throw new ReflectionException(
                     $e->getMessage(),
-                    (int) $e->getCode(),
+                    $e->getCode(),
                     $e
                 );
             }
@@ -641,42 +659,24 @@ final class CodeCoverage
         return array_values($unintentionallyCoveredUnits);
     }
 
-    private function coveredFileAnalyser(): CoveredFileAnalyser
+    private function analyser(): FileAnalyser
     {
-        if ($this->coveredFileAnalyser !== null) {
-            return $this->coveredFileAnalyser;
+        if ($this->analyser !== null) {
+            return $this->analyser;
         }
 
-        $this->coveredFileAnalyser = new ParsingCoveredFileAnalyser(
+        $this->analyser = new ParsingFileAnalyser(
             $this->useAnnotationsForIgnoringCode,
             $this->ignoreDeprecatedCode
         );
 
         if ($this->cachesStaticAnalysis()) {
-            $this->coveredFileAnalyser = new CachingCoveredFileAnalyser(
+            $this->analyser = new CachingFileAnalyser(
                 $this->cacheDirectory,
-                $this->coveredFileAnalyser
+                $this->analyser
             );
         }
 
-        return $this->coveredFileAnalyser;
-    }
-
-    private function uncoveredFileAnalyser(): UncoveredFileAnalyser
-    {
-        if ($this->uncoveredFileAnalyser !== null) {
-            return $this->uncoveredFileAnalyser;
-        }
-
-        $this->uncoveredFileAnalyser = new ParsingUncoveredFileAnalyser;
-
-        if ($this->cachesStaticAnalysis()) {
-            $this->uncoveredFileAnalyser = new CachingUncoveredFileAnalyser(
-                $this->cacheDirectory,
-                $this->uncoveredFileAnalyser
-            );
-        }
-
-        return $this->uncoveredFileAnalyser;
+        return $this->analyser;
     }
 }

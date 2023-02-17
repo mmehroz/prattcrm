@@ -192,10 +192,10 @@ class productController extends Controller
 	}
 	public function productlist(Request $request){
 		$productlist = DB::table('product')
-		->select('*')
+		->select('*', 'product_id as id')
 		->where('status_id','=',1)
 		->orderBy('product_id','DESC')
-		->paginate(30);
+		->get();
 		$thumbnailpath = URL::to('/')."/public/product_thumbnail/";
 		if(isset($productlist)){
 			return response()->json(['data' => $productlist, 'thumbnailpath' => $thumbnailpath, 'message' => 'Product List'],200);

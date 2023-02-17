@@ -20,7 +20,7 @@ class mvnoplanController extends Controller
 	public $emptyarray = array();
 	public function mvnoplanlist(Request $request){
 		$list = DB::table('mvnoplan')
-		->select('*')
+		->select('*', 'mvnoplan_id as id')
 		->where('status_id','=',1)
 		->orderBy('mvnoplan_id','DESC')
 		->get();

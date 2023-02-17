@@ -1,5 +1,44 @@
 # Changelog
 
+## 1.5.0 (2022-09-09)
+
+*   Feature: Full support for PHP 8.2 release.
+    (#33 by @WyriHaximus)
+
+*   Improve test suite and minor documentation improvements.
+    (#32 by @clue and #31 by @nhedger)
+
+## 1.4.0 (2022-06-20)
+
+*   Feature: Forward compatibility with react/promise 3.
+    (#20 by @WyriHaximus)
+
+*   Improve test suite, test against PHP 8.1 and fix legacy HHVM build.
+    (#28, #29 and #30 by @SimonFrings)
+
+## 1.3.0 (2021-10-18)
+
+*   Feature: Improve error reporting by appending previous exception messages.
+    (#26 by @clue)
+
+    For most common use cases this means that simply reporting the `Exception`
+    message should give the most relevant details for any issues:
+
+    ```php
+    React\Promise\Stream\buffer($stream)->then(function (string $contents) {
+        // …
+    }, function (Exception $e) {
+        echo 'Error:' . $e->getMessage() . PHP_EOL;
+    });
+    ```
+
+*   Improve documentation, describe promise and stream data types.
+    (#27 by @clue and #23 by @WyriHaximus)
+
+*   Improve test suite and add `.gitattributes` to exclude dev files from exports.
+    Use GitHub actions for continuous integration (CI) and run tests on PHPUnit 9 and PHP 8.
+    (#21 by @reedy and #22, #24 and #25 by @SimonFrings)
+
 ## 1.2.0 (2019-07-03)
 
 *   Feature: Support unwrapping object streams by buffering original write chunks in array.

@@ -6,6 +6,7 @@ use BeyondCode\LaravelWebSockets\Apps\App;
 use BeyondCode\LaravelWebSockets\QueryParameters;
 use BeyondCode\LaravelWebSockets\WebSockets\Channels\ChannelManager;
 use Exception;
+use GuzzleHttp\Psr7\Message;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest;
 use Illuminate\Http\JsonResponse;
@@ -80,9 +81,13 @@ abstract class Controller implements HttpServerInterface
                 ->ensureValidAppId($laravelRequest->appId)
                 ->ensureValidSignature($laravelRequest);
 
-            $response = $this($laravelRequest);
+            $response = new JsonResponse($this($laravelRequest));
 
-            $connection->send(JsonResponse::create($response));
+            $content = $response->content();
+
+            $response->header('Content-Length', strlen($content));
+
+            $connection->send($response);
             $connection->close();
         }
     }
@@ -97,13 +102,16 @@ abstract class Controller implements HttpServerInterface
             return;
         }
 
+        $responseData = json_encode([
+            'error' => $exception->getMessage(),
+        ]);
+
         $response = new Response($exception->getStatusCode(), [
             'Content-Type' => 'application/json',
-        ], json_encode([
-            'error' => $exception->getMessage(),
-        ]));
+            'Content-Length' => strlen($responseData),
+        ], $responseData);
 
-        $connection->send(\GuzzleHttp\Psr7\str($response));
+        $connection->send(Message::toString($response));
 
         $connection->close();
     }
