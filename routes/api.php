@@ -13,6 +13,7 @@ use App\Http\Controller\operationController;
 use App\Http\Controller\subscriptionController;
 use App\Http\Controller\mvnoplanController;
 use App\Http\Controller\deviceController;
+use App\Http\Controller\imeiplanController;
 /*
 |---------------------------------------------------------------------	-----
 | API Routes
@@ -88,5 +89,14 @@ Route::any('/savemvnoplan', [subscriberController::class, 'savemvnoplan']);
 
 Route::any('/changeimei', [deviceController::class, 'changeimei']);
 Route::any('/changesim', [deviceController::class, 'changesim']);
+
+Route::any('/mvnoplanlist', [mvnoplanController::class, 'mvnoplanlist']);
+Route::any('/mvnoplandetails', [mvnoplanController::class, 'mvnoplandetails']);
+Route::any('/deletemvnoplan', [mvnoplanController::class, 'deletemvnoplan']);
+Route::any('/savemvnoplan', [mvnoplanController::class, 'savemvnoplan']);
+
+Route::any('/imeiplanlist', [imeiplanController::class, 'imeiplanlist']);
+Route::any('/imeiplandetails', [imeiplanController::class, 'imeiplandetails']);
+Route::any('/deleteimeiplan', [imeiplanController::class, 'deleteimeiplan']);
 });
 });

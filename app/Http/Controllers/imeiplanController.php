@@ -15,75 +15,75 @@ use Session;
 use Response;
 use Validator;
 
-class mvnoplanController extends Controller
+class imeiplanController extends Controller
 {
 	public $emptyarray = array();
-	public function mvnoplanlist(Request $request){
-		$list = DB::table('mvnoplan')
+	public function imeiplanlist(Request $request){
+		$list = DB::table('imeiplan')
 		->select('*')
 		->where('status_id','=',1)
-		->orderBy('mvnoplan_id','DESC')
+		->orderBy('imeiplan_id','DESC')
 		->get();
 		if(isset($list)){
-			return response()->json(['data' => $list,'message' => 'MVNO Plan List'],200);
+			return response()->json(['data' => $list,'message' => 'IMEI Plan List'],200);
 		}else{
-			return response()->json(['data' => $emptyarray, 'message' => 'MVNO Plan List'],200);
+			return response()->json(['data' => $emptyarray, 'message' => 'IMEI Plan List'],200);
 		}
 	}
-	public function mvnoplandetails(Request $request){
+	public function imeiplandetails(Request $request){
 		$validate = Validator::make($request->all(), [ 
-	      'mvnoplan_id'	=> 'required',
+	      'imeiplan_id'	=> 'required',
 	    ]);
      	if ($validate->fails()) {    
-			return response()->json("MVNO Plan Id Required", 400);
+			return response()->json("IMEI Plan Id Required", 400);
 		}
-		$basic = DB::table('mvnoplan')
+		$basic = DB::table('imeiplan')
 		->select('*')
-		->where('mvnoplan_id','=',$request->mvnoplan_id)
+		->where('imeiplan_id','=',$request->imeiplan_id)
 		->where('status_id','=',1)
 		->first();
-		$default = DB::table('mvnodefault')
+		$default = DB::table('imeidefault')
 		->select('*')
-		->where('mvnoplan_id','=',$request->mvnoplan_id)
+		->where('imeiplan_id','=',$request->imeiplan_id)
 		->where('status_id','=',1)
 		->get();
-		$calling = DB::table('mvnointlcalling')
+		$calling = DB::table('imeiintlcalling')
 		->select('*')
-		->where('mvnoplan_id','=',$request->mvnoplan_id)
+		->where('imeiplan_id','=',$request->imeiplan_id)
 		->where('status_id','=',1)
 		->get();
-		$roaming = DB::table('mvnointlroaming')
+		$roaming = DB::table('imeiintlroaming')
 		->select('*')
-		->where('mvnoplan_id','=',$request->mvnoplan_id)
+		->where('imeiplan_id','=',$request->imeiplan_id)
 		->where('status_id','=',1)
 		->get();
 		if($data){
-			return response()->json(['data' => $data, 'message' => 'MVNO Plan Details'],200);
+			return response()->json(['data' => $data, 'message' => 'IMEI Plan Details'],200);
 		}else{
 			return response()->json("Oops! Something Went Wrong", 400);
 		}
 	}
-	public function deletemvnoplan(Request $request){
+	public function deleteimeiplan(Request $request){
 		$validate = Validator::make($request->all(), [
-	      'mvnoplan_id'	=> 'required',
+	      'imeiplan_id'	=> 'required',
 	    ]);
      	if ($validate->fails()) {
-			return response()->json("MVNO Plan Id Required", 400);
+			return response()->json("IMEI Plan Id Required", 400);
 		}
-		$update  = DB::table('mvnoplan')
-		->where('mvnoplan_id','=',$request->mvnoplan_id)
+		$update  = DB::table('imeiplan')
+		->where('imeiplan_id','=',$request->imeiplan_id)
 		->update([
 			'status_id' 	=> 2,
 			'deleted_by'	=> $request->user_id,
 			'deleted_at'	=> date('Y-m-d h:i:s'),
 		]);
 		if($update){
-			return response()->json(['message' => 'MVNO Plan Deleted Successfully'],200);
+			return response()->json(['message' => 'IMEI Plan Deleted Successfully'],200);
 		}else{
 			return response()->json("Oops! Something Went Wrong", 400);
 		}
 	}
-	public function savemvnoplan(Request $request){
+	public function saveimeiplan(Request $request){
 		$curl = curl_init();
 		curl_setopt_array($curl, array(
 		CURLOPT_URL => 'https://prod.mobility-api.pareteum.cloud/v3/mobility/plans?MVNO=500087',
@@ -103,54 +103,54 @@ class mvnoplanController extends Controller
 		$response = json_decode($response);
 		foreach($response->plans as $results){
 			$adds = array(
-				'mvnoplan_title' 		=> $results->plan,
-				'mvnoplan_tethering' 	=> $results->tethering,
-				'mvnoplan_type' 		=> $results->type,
-				'mvoplan_size' 			=> $results->size,
+				'imeiplan_title' 		=> $results->plan,
+				'imeiplan_tethering' 	=> $results->tethering,
+				'imeiplan_type' 		=> $results->type,
+				'imeiplan_size' 		=> $results->size,
 				'status_id'				=> 1,
 				'created_by'			=> $request->user_id,
 				'created_at'			=> date('Y-m-d h:i:s')
 			);
-			$save = DB::table('mvnoplan')->insert($adds);
-			$mvnoplan_id - DB::getPdo()->lastInsertId();
+			$save = DB::table('imeiplan')->insert($adds);
+			$imeiplan_id - DB::getPdo()->lastInsertId();
 			if(isset($results->defaults)){
 				foreach($results->defaults as $defaults){
-					$mvnodefault = array(
-						'mvnodefault_intlcalling' 			=> $defaults->intlCalling,
-						'mvnodefault_roaming'				=> $defaults->intlRoaming,
-						'mvnodefault_messagesuppression' 	=> $defaults->MessageSuppression,
-						'mvnodefault_callernameblocking'	=> $defaults->CallerNameBlocking,
-						'mvnoplan_id'						=> $mvnoplan_id,
+					$imeidefault = array(
+						'imeidefault_intlcalling' 			=> $defaults->intlCalling,
+						'imeidefault_roaming'				=> $defaults->intlRoaming,
+						'imeidefault_messagesuppression' 	=> $defaults->MessageSuppression,
+						'imeidefault_callernameblocking'	=> $defaults->CallerNameBlocking,
+						'imeiplan_id'						=> $imeiplan_id,
 						'status_id'							=> 1,
 						'created_by'						=> $request->user_id,
 						'created_at'						=> date('Y-m-d h:i:s')
 					);
-					DB::table('mvnodefault')->insert($mvnodefault);
+					DB::table('imeidefault')->insert($imeidefault);
 				}
 			}
 		}
 		if(isset($results->intlCalling)){
 			foreach($results->intlCalling as $intlcallings){
-				$mvnointlcalling = array(
-					'mvnointlcalling_calling' 	=> $intlcallings,
-					'mvnoplan_id'				=> $mvnoplan_id,
+				$imeiintlcalling = array(
+					'imeiintlcalling_calling' 	=> $intlcallings,
+					'imeiplan_id'				=> $imeiplan_id,
 					'status_id'					=> 1,
 					'created_by'				=> $request->user_id,
 					'created_at'				=> date('Y-m-d h:i:s')
 				);
-				DB::table('mvnointlcalling')->insert($mvnointlcalling);
+				DB::table('imeiintlcalling')->insert($imeiintlcalling);
 			}
 		}
 		if(isset($result->intlRoaming)){
 			foreach($result->mintlRoaming as $intlRoaming){
-				$mvnointlroaming = array(
-					'mvnointlroaming_roaming' 	=> $intlroaming,
-					'mvnoplan_id'				=> $mvnoplan_id,
+				$imeiintlroaming = array(
+					'imeiintlroaming_roaming' 	=> $intlroaming,
+					'imeiplan_id'				=> $imeiplan_id,
 					'status_id'					=> 1,
 					'created_by'				=> $request->user_id,
 					'created_at'				=> date('Y-m-d h:i:s')
 				);
-				DB::table('mvnointlroaming')->insert($mvnointlroaming);
+				DB::table('imeiintlroaming')->insert($imeiintlroaming);
 			}
 		}
 		if(isset($save)){
