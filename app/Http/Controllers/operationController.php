@@ -158,7 +158,7 @@ class operationController extends Controller
 			return response()->json("Oops! Something Went Wrong", 400);
 		}
 	}
-	public function deletesubscriber(Request $request){
+	public function deleteoperation(Request $request){
 		$validate = Validator::make($request->all(), [
 	      'operation_mainid'	=> 'required',
 	    ]);

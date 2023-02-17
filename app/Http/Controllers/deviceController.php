@@ -15,7 +15,7 @@ use Session;
 use Response;
 use Validator;
 
-class categoryController extends Controller
+class deviceController extends Controller
 {
 	public $emptyarray = array();
 	public function changeimei(Request $request){
