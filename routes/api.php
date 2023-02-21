@@ -14,6 +14,9 @@ use App\Http\Controllers\subscriptionController;
 use App\Http\Controllers\mvnoplanController;
 use App\Http\Controllers\deviceController;
 use App\Http\Controllers\imeiplanController;
+use App\Http\Controllers\featuremanagementController;
+use App\Http\Controllers\smsController;
+use App\Http\Controllers\sellermanagementController;
 /*
 |---------------------------------------------------------------------	-----
 | API Routes
@@ -73,19 +76,16 @@ Route::any('/operationdetail', [operationController::class, 'operationdetail']);
 Route::any('/deleteoperation', [operationController::class, 'deleteoperation']);
 Route::any('/saveoperation', [operationController::class, 'saveoperation']);
 
-Route::any('/createsubscription', [subscriberController::class, 'createsubscription']);
-Route::any('/updatesubscription', [subscriberController::class, 'updatesubscription']);
-Route::any('/subscriptionlist', [subscriberController::class, 'subscriptionlist']);
-Route::any('/subscriptiondetails', [subscriberController::class, 'subscriptiondetails']);
-Route::any('/deletesubscription', [subscriberController::class, 'deletesubscription']);
-Route::any('/savesubscription', [subscriberController::class, 'savesubscription']);
-
-Route::any('/createmvnoplan', [subscriberController::class, 'createmvnoplan']);
-Route::any('/updatesubscription', [subscriberController::class, 'updatesubscription']);
-Route::any('/mvnoplanlist', [subscriberController::class, 'mvnoplanlist']);
-Route::any('/mvnoplandetails', [subscriberController::class, 'mvnoplandetails']);
-Route::any('/deletemvnoplan', [subscriberController::class, 'deletemvnoplan']);
-Route::any('/savemvnoplan', [subscriberController::class, 'savemvnoplan']);
+Route::any('/createsubscription', [subscriptionController::class, 'createsubscription']);
+Route::any('/updatesubscription', [subscriptionController::class, 'updatesubscription']);
+Route::any('/subscriptionlist', [subscriptionController::class, 'subscriptionlist']);
+Route::any('/subscriptiondetails', [subscriptionController::class, 'subscriptiondetails']);
+Route::any('/deletesubscription', [subscriptionController::class, 'deletesubscription']);
+Route::any('/savesubscription', [subscriptionController::class, 'savesubscription']);
+Route::any('/verifyimei', [subscriptionController::class, 'verifyimei']);
+Route::any('subscrptionwithoutportin', [subscriptionController::class, 'subscrptionwithoutportin']);
+Route::any('subscrptionwithportin', [subscriptionController::class, 'subscrptionwithportin']);
+Route::any('subscrptionstatus', [subscriptionController::class, 'subscrptionstatus']);
 
 Route::any('/changeimei', [deviceController::class, 'changeimei']);
 Route::any('/changesim', [deviceController::class, 'changesim']);
@@ -98,5 +98,23 @@ Route::any('/savemvnoplan', [mvnoplanController::class, 'savemvnoplan']);
 Route::any('/imeiplanlist', [imeiplanController::class, 'imeiplanlist']);
 Route::any('/imeiplandetails', [imeiplanController::class, 'imeiplandetails']);
 Route::any('/deleteimeiplan', [imeiplanController::class, 'deleteimeiplan']);
+Route::any('/saveimeiplan', [imeiplanController::class, 'saveimeiplan']);
+
+Route::any('internationalcalling', [featuremanagementController::class, 'internationalcalling']);
+Route::any('internationalroaming', [featuremanagementController::class, 'internationalroaming']);
+Route::any('internationaldayplan', [featuremanagementController::class, 'internationaldayplan']);
+Route::any('datablocking', [featuremanagementController::class, 'datablocking']);
+Route::any('outboundcalleridblocking', [featuremanagementController::class, 'outboundcalleridblocking']);
+Route::any('worldconnectadvantage', [featuremanagementController::class, 'worldconnectadvantage']);
+Route::any('suppressmessaging', [featuremanagementController::class, 'suppressmessaging']);
+Route::any('passportvoicesmsdata', [featuremanagementController::class, 'passportvoicesmsdata']);
+Route::any('passportdata', [featuremanagementController::class, 'passportdata']);
+
+Route::any('sendsms', [smsController::class, 'sendsms']);
+
+Route::any('createseller', [sellermanagementController::class, 'createseller']);
+Route::any('sellerlist', [sellermanagementController::class, 'sellerlist']);
+Route::any('sellerdetails', [sellermanagementController::class, 'sellerdetails']);
+Route::any('deleteseller', [sellermanagementController::class, 'deleteseller']);
 });
 });

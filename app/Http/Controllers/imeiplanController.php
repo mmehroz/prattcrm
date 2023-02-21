@@ -20,7 +20,7 @@ class imeiplanController extends Controller
 	public $emptyarray = array();
 	public function imeiplanlist(Request $request){
 		$list = DB::table('imeiplan')
-		->select('*')
+		->select('*','imeiplan_id as id')
 		->where('status_id','=',1)
 		->orderBy('imeiplan_id','DESC')
 		->get();
@@ -38,27 +38,27 @@ class imeiplanController extends Controller
 			return response()->json("IMEI Plan Id Required", 400);
 		}
 		$basic = DB::table('imeiplan')
-		->select('*')
+		->select('*', 'imeiplan_id as id')
 		->where('imeiplan_id','=',$request->imeiplan_id)
 		->where('status_id','=',1)
 		->first();
 		$default = DB::table('imeidefault')
-		->select('*')
+		->select('*','imeidefault_id as id')
 		->where('imeiplan_id','=',$request->imeiplan_id)
 		->where('status_id','=',1)
 		->get();
 		$calling = DB::table('imeiintlcalling')
-		->select('*')
+		->select('*','imeiintlcalling_id as id')
 		->where('imeiplan_id','=',$request->imeiplan_id)
 		->where('status_id','=',1)
 		->get();
 		$roaming = DB::table('imeiintlroaming')
-		->select('*')
+		->select('*','imeiintlroaming_id as id')
 		->where('imeiplan_id','=',$request->imeiplan_id)
 		->where('status_id','=',1)
 		->get();
-		if($data){
-			return response()->json(['data' => $data, 'message' => 'IMEI Plan Details'],200);
+		if($basic){
+			return response()->json(['basic' => $basic, 'default' => $default, 'calling' => $calling, 'roaming' => $roaming, 'message' => 'IMEI Plan Details'],200);
 		}else{
 			return response()->json("Oops! Something Went Wrong", 400);
 		}
@@ -112,14 +112,34 @@ class imeiplanController extends Controller
 				'created_at'			=> date('Y-m-d h:i:s')
 			);
 			$save = DB::table('imeiplan')->insert($adds);
-			$imeiplan_id - DB::getPdo()->lastInsertId();
+			$imeiplan_id = DB::getPdo()->lastInsertId();
 			if(isset($results->defaults)){
 				foreach($results->defaults as $defaults){
+					if(isset($defaults->intlCalling)){
+						$calling = $defaults->intlCalling;
+					}else{
+						$calling = "-";
+					}
+					if(isset($defaults->intlRoaming)){
+						$roaming = $defaults->intlRoaming;
+					}else{
+						$roaming = "-";
+					}
+					if(isset($defaults->MessageSuppression)){
+						$suppression = $defaults->MessageSuppression;
+					}else{
+						$suppression = "-";
+					}
+					if(isset($defaults->CallerNameBlocking)){
+						$blocking = $defaults->CallerNameBlocking;
+					}else{
+						$blocking = "-";
+					}
 					$imeidefault = array(
-						'imeidefault_intlcalling' 			=> $defaults->intlCalling,
-						'imeidefault_roaming'				=> $defaults->intlRoaming,
-						'imeidefault_messagesuppression' 	=> $defaults->MessageSuppression,
-						'imeidefault_callernameblocking'	=> $defaults->CallerNameBlocking,
+						'imeidefault_intlcalling' 			=> $calling,
+						'imeidefault_roaming'				=> $roaming,
+						'imeidefault_messagesuppression' 	=> $suppression,
+						'imeidefault_callernameblocking'	=> $blocking,
 						'imeiplan_id'						=> $imeiplan_id,
 						'status_id'							=> 1,
 						'created_by'						=> $request->user_id,
@@ -128,29 +148,29 @@ class imeiplanController extends Controller
 					DB::table('imeidefault')->insert($imeidefault);
 				}
 			}
-		}
-		if(isset($results->intlCalling)){
-			foreach($results->intlCalling as $intlcallings){
-				$imeiintlcalling = array(
-					'imeiintlcalling_calling' 	=> $intlcallings,
-					'imeiplan_id'				=> $imeiplan_id,
-					'status_id'					=> 1,
-					'created_by'				=> $request->user_id,
-					'created_at'				=> date('Y-m-d h:i:s')
-				);
-				DB::table('imeiintlcalling')->insert($imeiintlcalling);
+			if(isset($results->intlCalling)){
+				foreach($results->intlCalling as $intlcallings){
+					$imeiintlcalling = array(
+						'imeiintlcalling_calling' 	=> $intlcallings,
+						'imeiplan_id'				=> $imeiplan_id,
+						'status_id'					=> 1,
+						'created_by'				=> $request->user_id,
+						'created_at'				=> date('Y-m-d h:i:s')
+					);
+					DB::table('imeiintlcalling')->insert($imeiintlcalling);
+				}
 			}
-		}
-		if(isset($result->intlRoaming)){
-			foreach($result->mintlRoaming as $intlRoaming){
-				$imeiintlroaming = array(
-					'imeiintlroaming_roaming' 	=> $intlroaming,
-					'imeiplan_id'				=> $imeiplan_id,
-					'status_id'					=> 1,
-					'created_by'				=> $request->user_id,
-					'created_at'				=> date('Y-m-d h:i:s')
-				);
-				DB::table('imeiintlroaming')->insert($imeiintlroaming);
+			if(isset($results->intlRoaming)){
+				foreach($results->intlRoaming as $intlroaming){
+					$imeiintlroaming = array(	
+						'imeiintlroaming_roaming' 	=> $intlroaming,
+						'imeiplan_id'				=> $imeiplan_id,
+						'status_id'					=> 1,
+						'created_by'				=> $request->user_id,
+						'created_at'				=> date('Y-m-d h:i:s')
+					);
+					DB::table('imeiintlroaming')->insert($imeiintlroaming);
+				}
 			}
 		}
 		if(isset($save)){

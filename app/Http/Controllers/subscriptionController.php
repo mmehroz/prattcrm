@@ -99,7 +99,7 @@ class subscriptionController extends Controller
 	}
 	public function subscriptionlist(Request $request){
 		$list = DB::table('subscription')
-		->select('*')
+		->select('*','subscription_id as id')
 		->where('status_id','=',1)
 		->orderBy('subscription_id','DESC')
 		->get();
@@ -116,9 +116,9 @@ class subscriptionController extends Controller
      	if ($validate->fails()) {    
 			return response()->json("Subscription Main Id Required", 400);
 		}
-		$data = DB::table('susbcription')
+		$data = DB::table('subscription')
 		->select('*')
-		->where('subscription_mainid','=',$request->subscription_mainid)
+		->where('subscription_id','=',$request->subscription_mainid)
 		->where('status_id','=',1)
 		->first();
 		if($data){
@@ -135,7 +135,7 @@ class subscriptionController extends Controller
 			return response()->json("Subscription Main Id Required", 400);
 		}
 		$update  = DB::table('subscription')
-		->where('subscription_mainid','=',$request->subscription_mainid)
+		->where('subscription_id','=',$request->subscription_mainid)
 		->update([
 			'status_id' 	=> 2,
 			'deleted_by'	=> $request->user_id,
@@ -195,6 +195,288 @@ class subscriptionController extends Controller
 			return response()->json(['message' => 'Saved Successfully'],200);
 		}else{
 			return response()->json(['message' => 'Already Saved'],200);
+		}
+	}
+	public function verifyimei(Request $request){
+		$validate = Validator::make($request->all(), [
+	      	'imei_number'	=> 'required',
+	    ]);
+     	if ($validate->fails()) {
+			return response()->json("IMEI Number Is Required", 400);
+		}
+		$curl = curl_init();
+		curl_setopt_array($curl, array(
+		CURLOPT_URL => 'https://prod.mobility-api.pareteum.cloud/v3/mobility/devices/351675643571544?MVNO=500087',
+		CURLOPT_RETURNTRANSFER => true,
+		CURLOPT_ENCODING => '',
+		CURLOPT_MAXREDIRS => 10,
+		CURLOPT_TIMEOUT => 0,
+		CURLOPT_FOLLOWLOCATION => true,
+		CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+		CURLOPT_CUSTOMREQUEST => 'GET',
+		CURLOPT_HTTPHEADER => array(
+			'Authorization: Basic cHJhdHRfbW9iaWxlOlByQDFrJUIj'
+		),
+		));
+		$response = curl_exec($curl);
+		curl_close($curl);
+		$response = json_decode($response);
+        if($response){
+			return response()->json(['data' => $response],200);
+		}else{
+			return response()->json("Oops! Something Went Wrong", 400);
+		}
+	}
+	public function subscrptionwithoutportin(Request $request){
+		$validate = Validator::make($request->all(), [
+	      	'activations_mainid'	=> 'required',
+	    ]);
+     	if ($validate->fails()) {
+			return response()->json("Activation Main Id Is Required", 400);
+		}
+		$curl = curl_init();
+		curl_setopt_array($curl, array(
+		CURLOPT_URL => 'https://prod.mobility-api.pareteum.cloud/v3/mobility/activations?MVNO=500087',
+		CURLOPT_RETURNTRANSFER => true,
+		CURLOPT_ENCODING => '',
+		CURLOPT_MAXREDIRS => 10,
+		CURLOPT_TIMEOUT => 0,
+		CURLOPT_FOLLOWLOCATION => true,
+		CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+		CURLOPT_CUSTOMREQUEST => 'POST',
+		CURLOPT_POSTFIELDS =>'{
+			"callbackUrl": "https://mobility.pareteum.api/WebHook/getPortinActivationResponse",
+			"activations": [
+				{
+					"subscriber": {
+						"address": {
+							"streetAddress": "2900 W Plano Pkwy",
+							"addressLine2": "string",
+							"city": "Plano",
+							"state": "TX",
+							"zipCode": "75075"
+						},
+						"firstName": "Pareteum",
+						"lastName": "Test",
+						"email": "pareteum.test@mailinator.com",
+						"contactNumber": "9849599599"
+					},
+					"service": {
+						"characteristics": [
+							{
+								"name": "serviceZipCode",
+								"value": "75075"
+							},
+							{
+								"name": "IMEI",
+								"value": "352498092175504"
+							},
+							{
+								"name": "ICCID",
+								"value": "89014103272368891806"
+							},
+							{
+								"name": "size",
+								"value": "100MB"
+							},
+							{
+								"name": "planName",
+								"value": "Mobility Basic Phone"
+							},
+							{
+								"name": "tethering",
+								"value": "NO"
+							},
+							{
+								"name": "serviceType",
+								"value": "Data And Voice"
+							},
+							{
+								"name": "intlCalling",
+								"value": "No"
+							},
+							{
+								"name": "intlRoaming",
+								"value": "No"
+							}                  
+						]
+					}
+				}
+			]
+		}',
+		CURLOPT_HTTPHEADER => array(
+			'Content-Type: application/json',
+			'Authorization: Basic cHJhdHRfbW9iaWxlOlByQDFrJUIj'
+		),
+		));
+		$response = curl_exec($curl);
+		curl_close($curl);
+		$response = json_decode($response);
+        if($response){
+			return response()->json(['data' => $response],200);
+		}else{
+			return response()->json("Oops! Something Went Wrong", 400);
+		}
+	}
+	public function subscrptionwithportin(Request $request){
+		$validate = Validator::make($request->all(), [
+	      	'activations_mainid'	=> 'required',
+	    ]);
+     	if ($validate->fails()) {
+			return response()->json("Activation Main Id Is Required", 400);
+		}
+		$curl = curl_init();
+		curl_setopt_array($curl, array(
+		CURLOPT_URL => 'https://prod.mobility-api.pareteum.cloud/v3/mobility/activations?MVNO=500087',
+		CURLOPT_RETURNTRANSFER => true,
+		CURLOPT_ENCODING => '',
+		CURLOPT_MAXREDIRS => 10,
+		CURLOPT_TIMEOUT => 0,
+		CURLOPT_FOLLOWLOCATION => true,
+		CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+		CURLOPT_CUSTOMREQUEST => 'POST',
+		CURLOPT_POSTFIELDS =>'{
+			"activations": [
+				{
+					"subscriber": {
+						"subscriberId": 4,
+						"firstName": "Pareteum",
+						"lastName": "Test",
+						"email": "pareteum.test@mailinator.com",
+						"contactNumber": "9546699999",
+						"address": {
+							"streetAddress": "180 S 100 W",
+							"addressLine2": "",
+							"city": "PLEASANT GRV",
+							"state": "UT",
+							"zipCode": "84062"
+						}
+					},
+					"service": {
+						"phoneNumber": "5109826326",
+						"characteristics": [
+							{
+								"name": "serviceZipCode",
+								"value": "94566"
+							},
+							{
+								"name": "IMEI",
+								"value": "355800070505858"
+							},
+							{
+								"name": "ICCID",
+								"value": "89014103272368891806"
+							},
+							{
+								"name": "planName",
+								"value": "Mobile Select"
+							},
+							{
+								"name": "size",
+								"value": "1GB"
+							},
+							{
+								"name": "tethering",
+								"value": "Yes"
+							},
+							{
+								"name": "serviceType",
+								"value": "Data and Voice"
+							},
+							{
+								"name": "intlCalling",
+								"value": "Yes"
+							},
+							{
+								"name": "intlRoaming",
+								"value": "Yes"
+							}
+						]
+					},
+					"portInInfo": {
+						"phoneNumber": "5109826326",
+						"portRequestLineId": "5109826326",
+						"serviceZipCode": "84062",
+						"subscriber": {
+							"firstName": "Laxman",
+							"lastName": "Battini",
+							"address": {
+								"streetAddress": "180 S 100 W",
+								"addressLine2": "",
+								"city": "PLEASANT GRV",
+								"state": "UT",
+								"zipCode": "84062"
+							}
+						},
+						"authorizer": {
+							"firstName": "Laxman",
+							"lastName": "Battini",
+							"address": {
+								"streetAddress": "180 S 100 W",
+								"addressLine2": "",
+								"city": "PLEASANT GRV",
+								"state": "UT",
+								"zipCode": "84062"
+							}
+						},
+						"serviceInfo": {
+							"area": "005015001430"
+						},
+						"oldServiceProvider": {
+							"accountNumber": "12345",
+							"password": "123",
+							"firstName": "Pareteum",
+							"lastName": "Test"
+						}
+					}
+				}
+			]
+		}',
+		CURLOPT_HTTPHEADER => array(
+			'Content-Type: application/json',
+			'Authorization: Basic cHJhdHRfbW9iaWxlOlByQDFrJUIj'
+		),
+		));
+		$response = curl_exec($curl);
+		curl_close($curl);
+		$response = json_decode($response);
+        if($response){
+			return response()->json(['data' => $response],200);
+		}else{
+			return response()->json("Oops! Something Went Wrong", 400);
+		}
+	}
+	public function subscrptionstatus(Request $request){
+		$validate = Validator::make($request->all(), [
+	      	'operation_id'	=> 'required',
+	    ]);
+     	if ($validate->fails()) {
+			return response()->json("Operation Id Is Required", 400);
+		}
+		$curl = curl_init();
+		curl_setopt_array($curl, array(
+		CURLOPT_URL => 'https://prod.mobility-api.pareteum.cloud/v3/mobility/operations/10?MVNO=500087',
+		CURLOPT_RETURNTRANSFER => true,
+		CURLOPT_ENCODING => '',
+		CURLOPT_MAXREDIRS => 10,
+		CURLOPT_TIMEOUT => 0,
+		CURLOPT_FOLLOWLOCATION => true,
+		CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+		CURLOPT_CUSTOMREQUEST => 'GET',
+		CURLOPT_HTTPHEADER => array(
+			'app-id: fd3bb4429ae44a86b8ed8f40f9940239',
+			'app-secret: 1280d88ae4EF458786E45937f78eF654',
+			'Content-Type: application/json',
+			'Authorization: Basic cHJhdHRfbW9iaWxlOlByQDFrJUIj'
+		),
+		));
+		$response = curl_exec($curl);
+		curl_close($curl);
+		$response = json_decode($response);
+        if($response){
+			return response()->json(['data' => $response],200);
+		}else{
+			return response()->json("Oops! Something Went Wrong", 400);
 		}
 	}
 }

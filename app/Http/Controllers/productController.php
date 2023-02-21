@@ -191,9 +191,15 @@ class productController extends Controller
 		}
 	}
 	public function productlist(Request $request){
+		$validate = Validator::make($request->all(), [ 
+			'status_id'		=> 'required',
+		]);
+		if ($validate->fails()) {    
+			  return response()->json("Status Id Required", 400);
+		}
 		$productlist = DB::table('product')
 		->select('*', 'product_id as id')
-		->where('status_id','=',1)
+		->where('status_id','=',$request->status_id)
 		->orderBy('product_id','DESC')
 		->get();
 		$thumbnailpath = URL::to('/')."/public/product_thumbnail/";

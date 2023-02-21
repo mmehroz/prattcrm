@@ -130,7 +130,7 @@ class operationController extends Controller
 	}
 	public function operationlist(Request $request){
 		$list = DB::table('operation')
-		->select('*','operation_mainid  as id')
+		->select('*','operation_mainid as id')
 		->where('status_id','=',1)
 		->orderBy('operation_id','DESC')
 		->get();

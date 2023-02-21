@@ -38,27 +38,27 @@ class mvnoplanController extends Controller
 			return response()->json("MVNO Plan Id Required", 400);
 		}
 		$basic = DB::table('mvnoplan')
-		->select('*')
+		->select('*','mvnoplan_id as id')
 		->where('mvnoplan_id','=',$request->mvnoplan_id)
 		->where('status_id','=',1)
 		->first();
 		$default = DB::table('mvnodefault')
-		->select('*')
+		->select('*','mvnodefault_id as id')
 		->where('mvnoplan_id','=',$request->mvnoplan_id)
 		->where('status_id','=',1)
 		->get();
 		$calling = DB::table('mvnointlcalling')
-		->select('*')
+		->select('*','mvnointlcalling_id as id')
 		->where('mvnoplan_id','=',$request->mvnoplan_id)
 		->where('status_id','=',1)
 		->get();
 		$roaming = DB::table('mvnointlroaming')
-		->select('*')
+		->select('*', 'mvnointlroaming_id as id')
 		->where('mvnoplan_id','=',$request->mvnoplan_id)
 		->where('status_id','=',1)
 		->get();
-		if($data){
-			return response()->json(['data' => $data, 'message' => 'MVNO Plan Details'],200);
+		if($basic){
+			return response()->json(['basic' => $basic, 'default' => $default, 'calling' => $calling,'roaming' => $roaming, 'message' => 'MVNO Plan Details'],200);
 		}else{
 			return response()->json("Oops! Something Went Wrong", 400);
 		}
@@ -112,45 +112,43 @@ class mvnoplanController extends Controller
 				'created_at'			=> date('Y-m-d h:i:s')
 			);
 			$save = DB::table('mvnoplan')->insert($adds);
-			$mvnoplan_id - DB::getPdo()->lastInsertId();
+			$mvnoplan_id = DB::getPdo()->lastInsertId();
 			if(isset($results->defaults)){
-				foreach($results->defaults as $defaults){
-					$mvnodefault = array(
-						'mvnodefault_intlcalling' 			=> $defaults->intlCalling,
-						'mvnodefault_roaming'				=> $defaults->intlRoaming,
-						'mvnodefault_messagesuppression' 	=> $defaults->MessageSuppression,
-						'mvnodefault_callernameblocking'	=> $defaults->CallerNameBlocking,
-						'mvnoplan_id'						=> $mvnoplan_id,
-						'status_id'							=> 1,
-						'created_by'						=> $request->user_id,
-						'created_at'						=> date('Y-m-d h:i:s')
+				$mvnodefault = array(
+					'mvnodefault_intlcalling' 			=> $results->defaults[0]->intlCalling,
+					'mvnodefault_roaming'				=> $results->defaults[1]->intlRoaming,
+					'mvnodefault_messagesuppression' 	=> $results->defaults[2]->MessageSuppression,
+					'mvnodefault_callernameblocking'	=> $results->defaults[3]->CallerNameBlocking,
+					'mvnoplan_id'						=> $mvnoplan_id,
+					'status_id'							=> 1,
+					'created_by'						=> $request->user_id,
+					'created_at'						=> date('Y-m-d h:i:s')
+				);
+				DB::table('mvnodefault')->insert($mvnodefault);
+			}
+			if(isset($results->intlCalling)){
+				foreach($results->intlCalling as $intlcallings){
+					$mvnointlcalling = array(
+						'mvnointlcalling_calling' 	=> $intlcallings,
+						'mvnoplan_id'				=> $mvnoplan_id,
+						'status_id'					=> 1,
+						'created_by'				=> $request->user_id,
+						'created_at'				=> date('Y-m-d h:i:s')
 					);
-					DB::table('mvnodefault')->insert($mvnodefault);
+					DB::table('mvnointlcalling')->insert($mvnointlcalling);
 				}
 			}
-		}
-		if(isset($results->intlCalling)){
-			foreach($results->intlCalling as $intlcallings){
-				$mvnointlcalling = array(
-					'mvnointlcalling_calling' 	=> $intlcallings,
-					'mvnoplan_id'				=> $mvnoplan_id,
-					'status_id'					=> 1,
-					'created_by'				=> $request->user_id,
-					'created_at'				=> date('Y-m-d h:i:s')
-				);
-				DB::table('mvnointlcalling')->insert($mvnointlcalling);
-			}
-		}
-		if(isset($result->intlRoaming)){
-			foreach($result->mintlRoaming as $intlRoaming){
-				$mvnointlroaming = array(
-					'mvnointlroaming_roaming' 	=> $intlroaming,
-					'mvnoplan_id'				=> $mvnoplan_id,
-					'status_id'					=> 1,
-					'created_by'				=> $request->user_id,
-					'created_at'				=> date('Y-m-d h:i:s')
-				);
-				DB::table('mvnointlroaming')->insert($mvnointlroaming);
+			if(isset($results->intlRoaming)){
+				foreach($results->intlRoaming as $intlRoaming){
+					$mvnointlroaming = array(
+						'mvnointlroaming_roaming' 	=> $intlRoaming,
+						'mvnoplan_id'				=> $mvnoplan_id,
+						'status_id'					=> 1,
+						'created_by'				=> $request->user_id,
+						'created_at'				=> date('Y-m-d h:i:s')
+					);
+					DB::table('mvnointlroaming')->insert($mvnointlroaming);
+				}
 			}
 		}
 		if(isset($save)){

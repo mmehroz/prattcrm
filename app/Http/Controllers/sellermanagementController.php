@@ -70,31 +70,31 @@ class sellermanagementController extends Controller
         curl_close($curl);
           $adds = array(
           'seller_id' 	            => $response->seller_id,
-          'seller_firstName' 	    => $request->firstName,
-          'seller_lastName'		    => $request->lastName,
-          'seller_email' 		    => $request->email,
-          'seller_phonenumber'      => $request->phoneNumber,
-          'seller_role'             => $request->role,
-          'seller_additionaldata'   => $request->additionalData,
-          'seller_resellername'     => $request->resellerName,
-          'seller_streetAddress'    => $request->streetAddress,
-          'seller_city'             => $request->city,
-          'seller_state'            => $request->state,
-          'seller_zipcode'          => $request->zipcode,
+          'seller_firstName' 	    => $request->seller_firstName,
+          'seller_lastName'		    => $request->seller_lastName,
+          'seller_email' 		    => $request->seller_email,
+          'seller_phonenumber'      => $request->seller_phonenumber,
+          'seller_role'             => $request->seller_role,
+          'seller_additionaldata'   => $request->seller_additionaldata,
+          'seller_resellername'     => $request->seller_resellername,
+          'seller_streetAddress'    => $request->seller_streetAddress,
+          'seller_city'             => $request->seller_city,
+          'seller_state'            => $request->seller_state,
+          'seller_zipcode'          => $request->seller_zipcode,
           'status_id'		 	    => 1,
           'created_by'	 	        => $request->user_id,
           'created_at'	 	        => date('Y-m-d h:i:s'),
           );
           $save = DB::table('seller')->insert($adds);
 		if(isset($response)){
-			return response()->json(['message' => $response->messages],200);
+			return response()->json(['message' => "Operation performed successfully."],200);
 		}else{
 			return response()->json(['message' => 'Oops! something went wrong'],400);
 		}
 	}
     public function sellerlist(Request $request){
 		$data = DB::table('seller')
-		->select('*')
+		->select('*','seller_mainid as id')
 		->where('status_id','=',1)
 		->get();
 		if($data){
@@ -123,13 +123,13 @@ class sellermanagementController extends Controller
 	}
 	public function deleteseller(Request $request){
 		$validate = Validator::make($request->all(), [
-	      'seller_id'	=> 'required',
+	      'seller_mainid'	=> 'required',
 	    ]);
      	if ($validate->fails()) {
 			return response()->json("Seller Id Required", 400);
 		}
 		$update  = DB::table('seller')
-		->where('seller_id','=',$request->seller_id)
+		->where('seller_mainid','=',$request->seller_mainid)
 		->update([
 			'status_id' 	=> 2,
 			'deleted_by'	=> $request->user_id,

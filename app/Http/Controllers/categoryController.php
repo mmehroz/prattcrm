@@ -68,7 +68,7 @@ class categoryController extends Controller
 	}
 	public function categorylist(Request $request){
 		$getcategorylist = DB::table('category')
-		->select('*')
+		->select('*','category_id as id')
 		->where('status_id','=',1)
 		->orderBy('category_id','DESC')
 		->get();
