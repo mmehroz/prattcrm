@@ -67,8 +67,8 @@ class subcategoryController extends Controller
 		}
 	}
 	public function subcategorylist(Request $request){
-		$getsubcategorylist = DB::table('subcategory')
-		->select('*')
+		$getsubcategorylist = DB::table('subcategorydetails')
+		->select('*','subcategory_id as id')
 		->where('status_id','=',1)
 		->orderBy('subcategory_id','DESC')
 		->get();

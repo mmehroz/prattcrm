@@ -140,7 +140,7 @@ class operationController extends Controller
 			return response()->json(['data' => $emptyarray, 'message' => 'Operation List'],200);
 		}
 	}
-	public function operationdetails(Request $request){
+	public function operationdetail(Request $request){
 		$validate = Validator::make($request->all(), [ 
 	      'operation_mainid'	=> 'required',
 	    ]);

@@ -18,16 +18,9 @@ use Validator;
 class settingsController extends Controller
 {
 	public $emptyarray = array();
-	public function role(Request $request){
-		$validatetoken = Validator::make($request->all(), [ 
-	      'role_id' => 'required',
-    	]);
-    	if ($validatetoken->fails()) {    
-			return response()->json("Role Id Required", 400);
-		}
+	public function rolelist(Request $request){
 		$getroles = DB::table('role')
 		->select('role_id','role_name')
-		->where('role_id','>=',$request->role_id)
 		->where('status_id','=',1)
 		->get();
 		if (isset($getroles)) {

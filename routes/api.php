@@ -17,6 +17,7 @@ use App\Http\Controllers\imeiplanController;
 use App\Http\Controllers\featuremanagementController;
 use App\Http\Controllers\smsController;
 use App\Http\Controllers\sellermanagementController;
+use App\Http\Controllers\userController;
 /*
 |---------------------------------------------------------------------	-----
 | API Routes
@@ -36,7 +37,7 @@ Route::any('/login', [loginController::class, 'login']);
 Route::middleware('login.check')->group(function(){	
 Route::any('/logout', [loginController::class, 'logout']);
 
-Route::any('/role', [settingsController::class, 'role']);
+Route::any('/rolelist', [settingsController::class, 'rolelist']);
 
 Route::any('/createvendor', [vendorController::class, 'createvendor']);
 Route::any('/updatevendor', [vendorController::class, 'updatevendor']);
@@ -116,5 +117,12 @@ Route::any('createseller', [sellermanagementController::class, 'createseller']);
 Route::any('sellerlist', [sellermanagementController::class, 'sellerlist']);
 Route::any('sellerdetails', [sellermanagementController::class, 'sellerdetails']);
 Route::any('deleteseller', [sellermanagementController::class, 'deleteseller']);
+
+Route::any('/adduser', [userController::class, 'adduser']);
+Route::any('/updateuser', [userController::class, 'updateuser']);
+Route::any('/userlist', [userController::class, 'userlist']);
+Route::any('/userdetails', [userController::class, 'userdetails']);
+Route::any('/deleteuser', [userController::class, 'deleteuser']);
+Route::any('/updateusercoverpicture', [userController::class, 'updateusercoverpicture']);
 });
 });
