@@ -89,7 +89,7 @@ class userController extends Controller
 		'user_name' 			=> $request->user_name,
 		'user_email'			=> $request->user_email,
 		'user_username' 		=> $request->user_username,
-		'user_password' 		=> $request->user_password,
+		'user_password' 		=> bcrypt($request->user_password),
 		'user_picture'			=> $userpicturename,
 		'user_coverpicture'		=> $usercoverpicturename,
 		'user_loginstatus' 		=> "Offline",

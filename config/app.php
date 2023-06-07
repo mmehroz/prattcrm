@@ -179,6 +179,8 @@ return [
         Intervention\Image\ImageServiceProvider::class,
         ProtoneMedia\LaravelFFMpeg\Support\ServiceProvider::class,
 
+        Tymon\JWTAuth\Providers\LaravelServiceProvider::class,
+
     ],
 
     /*
@@ -232,7 +234,6 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
         'Image' => Intervention\Image\Facades\Image::class,
         'FFMpeg' => Protonemedia\LaravelFFMpeg\Support\FFMpeg::class,
-
 
     ],
 

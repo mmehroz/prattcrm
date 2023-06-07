@@ -33,7 +33,7 @@ use App\Http\Controllers\userController;
 //     return $request->user();
 // });
 Route::middleware('cors')->group(function(){
-Route::any('/login', [loginController::class, 'login']);
+Route::any('/', [loginController::class, 'login']);
 Route::middleware('login.check')->group(function(){	
 Route::any('/logout', [loginController::class, 'logout']);
 
