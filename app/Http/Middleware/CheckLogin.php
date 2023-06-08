@@ -4,6 +4,9 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use DB;
+use JWTAuth;
+use App\Models\User;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class CheckLogin {
     /**
@@ -15,10 +18,10 @@ class CheckLogin {
     */
 
     public function handle( Request $request, Closure $next ) {
-        if ( $request->header( 'token' ) && $request->user_id ) {
+        if ( $request->header( 'authorization' ) && $request->user_id ) {
             $check = DB::table( 'users' )
             ->select( 'user_id' )
-            ->where( 'user_token', '=', $request->header( 'token' ) )
+            ->where( 'user_id', '=', $request->user_id )
             ->where( 'status_id', '=', 1 )
             ->count();
             if ( $check == 0 ) {

@@ -33,7 +33,14 @@ use App\Http\Controllers\userController;
 //     return $request->user();
 // });
 Route::middleware('cors')->group(function(){
-Route::any('/', [loginController::class, 'login']);
+Route::any('/clear-cache', function() {
+    Artisan::call('cache:clear');
+    Artisan::call('config:clear');
+    Artisan::call('view:clear');
+    Artisan::call('route:clear');
+    return "Cache is cleared";
+});
+Route::any('/login', [loginController::class, 'login']);
 Route::middleware('login.check')->group(function(){	
 Route::any('/logout', [loginController::class, 'logout']);
 
@@ -67,6 +74,9 @@ Route::any('/createsubscriber', [subscriberController::class, 'createsubscriber'
 Route::any('/updatesubscriber', [subscriberController::class, 'updatesubscriber']);
 Route::any('/subscriberlist', [subscriberController::class, 'subscriberlist']);
 Route::any('/subscriberdetails', [subscriberController::class, 'subscriberdetails']);
+Route::any('/subscriberdetailsbyname', [subscriberController::class, 'subscriberdetailsbyname']);
+Route::any('/subscriberdetailsbyemail', [subscriberController::class, 'subscriberdetailsbyemail']);
+Route::any('/subscriberdetailsbyphone', [subscriberController::class, 'subscriberdetailsbyphone']);
 Route::any('/deletesubscriber', [subscriberController::class, 'deletesubscriber']);
 Route::any('/savesubscriber', [subscriberController::class, 'savesubscriber']);
 
